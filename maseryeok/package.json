@@ -1,0 +1,12 @@
+{
+  "name": "obsd-ilju-server",
+  "version": "1.0.0",
+  "description": "오복신당 일주 결과 공유 서버",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
