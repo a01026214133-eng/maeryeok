@@ -678,7 +678,7 @@
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
             </svg>
           </span>
-          링크 복사
+          나의 링크 공유하기
         </button>
         <!-- 카카오톡 (모바일: 이미지 공유 / PC: 이미지 저장) -->
         <button class="share-btn share-btn-kakao" id="share-kakao" onclick="shareWithImage()">
@@ -687,7 +687,7 @@
               <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.56 5.08 3.93 6.54L5 21l4.27-2.27C10.13 19.04 11.05 19.2 12 19.2c5.523 0 10-3.477 10-7.8C22 6.477 17.523 3 12 3z"/>
             </svg>
           </span>
-          <span id="kakao-btn-text">카카오톡</span>
+          <span id="kakao-btn-text">카카오톡으로 공유하기</span>
         </button>
       </div>
     </div>
@@ -1808,7 +1808,7 @@ async function shareWithImage() {
     }
   } finally {
     btn.disabled = false;
-    btnText.textContent = '카카오톡';
+    btnText.textContent = '카카오톡으로 공유하기';
   }
 }
 
