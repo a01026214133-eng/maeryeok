@@ -1690,7 +1690,7 @@ function fillShareCard() {
 // ── 이미지 생성 공통 (canvas 반환) ──
 async function buildShareCanvas() {
   const iljuRaw = document.getElementById('ilju-big')?.textContent?.trim() || '—';
-  const iljuName = iljuRaw.replace(/^너는\s*/, '').replace(/구나$/, '').trim();
+  const iljuName = iljuRaw.replace(/^나는\s*/, '').replace(/구나$/, '').trim();
 
   const W = 480, H = 480, S = 2;
   const canvas = document.createElement('canvas');
@@ -1813,7 +1813,7 @@ async function saveResultImage() {
 // ① 카카오톡 공유
 function shareKakao() {
   const url = getShareUrl(); // 현재 결과 페이지 URL (파라미터 포함)
-  const iljuName = document.getElementById('ilju-big')?.textContent?.replace('너는 ', '').replace('구나', '').trim() || '나의 일주';
+  const iljuName = document.getElementById('ilju-big')?.textContent?.replace(  '나는 ', '').replace('구나', '').trim() || '나의 일주';
 
   if (window.Kakao && window.Kakao.isInitialized()) {
     Kakao.Share.sendDefault({
@@ -1850,7 +1850,7 @@ function shareInstagram() {
 // ④ X (트위터) 공유
 function shareTwitter() {
   const url = getShareUrl();
-  const iljuName = document.getElementById('ilju-big')?.textContent?.replace('너는 ', '').replace('구나', '').trim() || '';
+  const iljuName = document.getElementById('ilju-big')?.textContent?.replace(  '나는 ', '').replace('구나', '').trim() || '';
   const text = getShareText(iljuName);
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   window.open(twitterUrl, '_blank', 'noopener,noreferrer');
@@ -1969,7 +1969,7 @@ async function main() {
     updateVisitorCount();
 
     // 일주 카드
-    document.getElementById('ilju-big').innerHTML = `너는 <em>${dayJu.gan}${dayJu.ji}일주</em>구나`;
+    document.getElementById('ilju-big').innerHTML = `나는 <em>${dayJu.gan}${dayJu.ji}일주</em>구나`;
     document.getElementById('ilju-hanja').textContent = `${dayJu.ganHan}(${dayJu.gan}) ${dayJu.jiHan}(${dayJu.ji}) · ${ANIMAL[dayJiIdx]}띠 지지`;
 
     const badgesEl = document.getElementById('ilju-badges');
