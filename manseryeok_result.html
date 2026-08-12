@@ -1582,6 +1582,22 @@ function getShareUrl() {
   return `${window.location.origin}/api/og?${p.toString()}`;
 }
 
+// 이미지 업로드 후 OG URL 반환
+async function getShareUrlWithImage() {
+  const canvas   = await buildShareCanvas();
+  const imageB64 = canvas.toDataURL('image/png');
+  const res = await fetch('/api/upload-share-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: imageB64 }),
+  });
+  if (!res.ok) throw new Error('업로드 실패');
+  const { url: imageUrl } = await res.json();
+  const p = new URLSearchParams(window.location.search);
+  p.set('img', encodeURIComponent(imageUrl));
+  return `${window.location.origin}/api/og?${p.toString()}`;
+}
+
 // 공유 텍스트
 function getShareText(iljuName) {
   return `나의 일주는 ${iljuName || ''}! 너도 일주를 확인해보자 🍀`;
@@ -1757,9 +1773,10 @@ async function shareWithImage() {
     const { url: imageUrl } = await res.json();
     console.log('[업로드 성공] 이미지 URL:', imageUrl);
 
-    // 3) 카카오 SDK로 공유창 오픈
-    const iljuName  = document.getElementById('ilju-big')?.textContent?.trim() || '나의 일주';
-    const shareUrl  = getShareUrl();
+    // 3) OG URL 생성 (이미지 URL 포함)
+    const p = new URLSearchParams(window.location.search);
+    p.set('img', encodeURIComponent(imageUrl));
+    const shareUrl = `${window.location.origin}/api/og?${p.toString()}`;
 
     if (window.Kakao && window.Kakao.isInitialized()) {
       Kakao.Share.sendDefault({
@@ -1835,10 +1852,21 @@ function shareKakao() {
   }
 }
 
-// ② 링크 복사
-function copyLink() {
-  const url = getShareUrl();
-  copyToClipboard(url, '링크가 복사됐어요! 🔗');
+// ② 링크 복사 (이미지 업로드 후 OG URL 복사)
+async function copyLink() {
+  const btn = document.getElementById('share-link');
+  const origText = btn.innerHTML;
+  btn.style.opacity = '0.6';
+  try {
+    showToast('링크를 준비 중입니다… 🔗');
+    const url = await getShareUrlWithImage();
+    copyToClipboard(url, '링크가 복사됐어요! 🔗');
+  } catch(e) {
+    // 실패 시 일반 URL 복사
+    copyToClipboard(getShareUrl(), '링크가 복사됐어요! 🔗');
+  } finally {
+    btn.style.opacity = '1';
+  }
 }
 
 // ③ 인스타그램 (이미지 저장 안내)
