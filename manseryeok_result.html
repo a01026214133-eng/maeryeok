@@ -1687,38 +1687,16 @@ function fillShareCard() {
   }
 }
 
-// ── 이미지 생성 공통 (canvas 반환) — 일주 카드 캡처 방식 ──
+// ── 이미지 생성 공통 (canvas 반환) ──
 async function buildShareCanvas() {
-  const name = document.getElementById('hero-name')?.textContent?.trim() || '';
-  const date = document.getElementById('hero-date')?.textContent?.trim() || '';
-  const iljuCard = document.querySelector('.ilju-card');
+  const iljuRaw = document.getElementById('ilju-big')?.textContent?.trim() || '—';
+  const iljuName = iljuRaw.replace(/^너는\s*/, '').replace(/구나$/, '').trim();
 
-  // 폰트 로드 대기
-  await document.fonts.ready;
-  await new Promise(r => requestAnimationFrame(r));
-
-  // 일주 카드 캡처
-  const cardCanvas = await html2canvas(iljuCard, {
-    backgroundColor: null,
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-    windowWidth: document.documentElement.scrollWidth,
-  });
-
-  // 최종 캔버스: 상단 이름/날짜 + 일주카드 + 하단 URL
-  const S = 2;
-  const W = cardCanvas.width / S;
-  const PAD = 28;
-  const TOP_H = 64;
-  const BOT_H = 48;
-  const H = TOP_H + W * (cardCanvas.height / cardCanvas.width) + BOT_H + PAD * 2;
-
-  const final = document.createElement('canvas');
-  final.width  = W * S;
-  final.height = H * S;
-  const ctx = final.getContext('2d');
+  const W = 480, H = 480, S = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width  = W * S;
+  canvas.height = H * S;
+  const ctx = canvas.getContext('2d');
   ctx.scale(S, S);
 
   // 배경
@@ -1729,35 +1707,30 @@ async function buildShareCanvas() {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  // 상단: 헤더
+  // 배경 장식
+  ctx.font = '120px serif';
+  ctx.fillStyle = 'rgba(212,160,64,0.08)';
   ctx.textAlign = 'center';
-  ctx.font = '11px sans-serif';
+  ctx.fillText('☰', W/2, H/2 + 60);
+
+  // 상단 레이블
+  ctx.font = '13px sans-serif';
   ctx.fillStyle = 'rgba(220,175,80,0.7)';
-  ctx.fillText('✦ 오복신당 일주 분석 ✦', W/2, PAD + 14);
+  ctx.textAlign = 'center';
+  ctx.fillText('✦ 나의 일주는 ✦', W/2, H/2 - 80);
 
-  ctx.font = 'bold 18px sans-serif';
-  ctx.fillStyle = '#f5e6c0';
-  ctx.fillText(name, W/2, PAD + 36);
+  // 일주 이름 크게
+  ctx.font = 'bold 100px serif';
+  ctx.fillStyle = '#f5e0a0';
+  ctx.textAlign = 'center';
+  ctx.fillText(iljuName, W/2, H/2 + 36);
 
-  ctx.font = '11px sans-serif';
-  ctx.fillStyle = 'rgba(220,190,130,0.55)';
-  ctx.fillText(date, W/2, PAD + 54);
+  // 하단
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = 'rgba(200,160,70,0.55)';
+  ctx.fillText('obsd-iljutest.co.kr', W/2, H/2 + 90);
 
-  // 일주 카드 이미지 삽입
-  const cardH = W * (cardCanvas.height / cardCanvas.width);
-  ctx.drawImage(cardCanvas, 0, TOP_H + PAD, W, cardH);
-
-  // 하단: URL
-  const botY = TOP_H + PAD + cardH + 14;
-  ctx.font = '10px sans-serif';
-  ctx.fillStyle = 'rgba(200,160,70,0.6)';
-  ctx.fillText('너도 일주를 확인해보자 🍀', W/2, botY);
-
-  ctx.font = 'bold 12px sans-serif';
-  ctx.fillStyle = 'rgba(220,180,80,0.85)';
-  ctx.fillText('obsd-iljutest.co.kr', W/2, botY + 18);
-
-  return final;
+  return canvas;
 }
 
 // ── 카카오 버튼: 이미지 서버 업로드 → 카카오 SDK 공유 ──
