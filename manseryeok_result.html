@@ -729,7 +729,7 @@
 
       <!-- 푸터 -->
       <div style="text-align:center;border-top:1px solid rgba(200,150,50,0.2);padding-top:16px;position:relative;">
-        <div style="font-size:10px;letter-spacing:0.15em;color:rgba(200,160,70,0.6);margin-bottom:4px;">나도 내 일주 확인해봐 🍀</div>
+        <div style="font-size:10px;letter-spacing:0.15em;color:rgba(200,160,70,0.6);margin-bottom:4px;">너도 일주를 확인해보자 🍀</div>
         <div style="font-size:13px;font-weight:700;color:rgba(220,180,80,0.85);letter-spacing:0.08em;">obsd-iljutest.co.kr</div>
       </div>
     </div>
@@ -1583,7 +1583,7 @@ function getShareUrl() {
 
 // 공유 텍스트
 function getShareText(iljuName) {
-  return `나의 일주는 ${iljuName || ''}! 나도 내 사주 일주 확인해봐 🍀`;
+  return `나의 일주는 ${iljuName || ''}! 너도 일주를 확인해보자 🍀`;
 }
 
 // ── 공유 카드 채우기 ──
@@ -1687,34 +1687,77 @@ function fillShareCard() {
   }
 }
 
-// ── 이미지 생성 공통 (canvas 반환) ──
+// ── 이미지 생성 공통 (canvas 반환) — 일주 카드 캡처 방식 ──
 async function buildShareCanvas() {
-  fillShareCard();
-  const card = document.getElementById('share-card');
+  const name = document.getElementById('hero-name')?.textContent?.trim() || '';
+  const date = document.getElementById('hero-date')?.textContent?.trim() || '';
+  const iljuCard = document.querySelector('.ilju-card');
 
-  // html2canvas 안정 렌더링: visibility:hidden + fixed 배치
-  card.style.cssText = 'position:fixed;top:-9999px;left:0;width:480px;visibility:hidden;z-index:-1;';
-
-  // 폰트·레이아웃 확정 대기
+  // 폰트 로드 대기
   await document.fonts.ready;
   await new Promise(r => requestAnimationFrame(r));
 
-  const canvas = await html2canvas(card, {
-    backgroundColor: '#160c02',
+  // 일주 카드 캡처
+  const cardCanvas = await html2canvas(iljuCard, {
+    backgroundColor: null,
     scale: 2,
     useCORS: true,
     allowTaint: true,
     logging: false,
-    width: 480,
-    windowWidth: 480,
-    x: 0,
-    y: 0,
-    scrollX: 0,
-    scrollY: 0,
+    windowWidth: document.documentElement.scrollWidth,
   });
 
-  card.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:480px;';
-  return canvas;
+  // 최종 캔버스: 상단 이름/날짜 + 일주카드 + 하단 URL
+  const S = 2;
+  const W = cardCanvas.width / S;
+  const PAD = 28;
+  const TOP_H = 64;
+  const BOT_H = 48;
+  const H = TOP_H + W * (cardCanvas.height / cardCanvas.width) + BOT_H + PAD * 2;
+
+  const final = document.createElement('canvas');
+  final.width  = W * S;
+  final.height = H * S;
+  const ctx = final.getContext('2d');
+  ctx.scale(S, S);
+
+  // 배경
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0,   '#160c02');
+  bg.addColorStop(0.5, '#2c1a08');
+  bg.addColorStop(1,   '#1a0e04');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // 상단: 헤더
+  ctx.textAlign = 'center';
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = 'rgba(220,175,80,0.7)';
+  ctx.fillText('✦ 오복신당 일주 분석 ✦', W/2, PAD + 14);
+
+  ctx.font = 'bold 18px sans-serif';
+  ctx.fillStyle = '#f5e6c0';
+  ctx.fillText(name, W/2, PAD + 36);
+
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = 'rgba(220,190,130,0.55)';
+  ctx.fillText(date, W/2, PAD + 54);
+
+  // 일주 카드 이미지 삽입
+  const cardH = W * (cardCanvas.height / cardCanvas.width);
+  ctx.drawImage(cardCanvas, 0, TOP_H + PAD, W, cardH);
+
+  // 하단: URL
+  const botY = TOP_H + PAD + cardH + 14;
+  ctx.font = '10px sans-serif';
+  ctx.fillStyle = 'rgba(200,160,70,0.6)';
+  ctx.fillText('너도 일주를 확인해보자 🍀', W/2, botY);
+
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = 'rgba(220,180,80,0.85)';
+  ctx.fillText('obsd-iljutest.co.kr', W/2, botY + 18);
+
+  return final;
 }
 
 // ── 카카오 버튼: 이미지 서버 업로드 → 카카오 SDK 공유 ──
@@ -1738,6 +1781,7 @@ async function shareWithImage() {
     });
     if (!res.ok) throw new Error('업로드 실패');
     const { url: imageUrl } = await res.json();
+    console.log('[업로드 성공] 이미지 URL:', imageUrl);
 
     // 3) 카카오 SDK로 공유창 오픈
     const iljuName  = document.getElementById('ilju-big')?.textContent?.trim() || '나의 일주';
@@ -1748,7 +1792,7 @@ async function shareWithImage() {
         objectType: 'feed',
         content: {
           title: `나의 일주는 ${iljuName}!`,
-          description: '나도 내 사주 일주 확인해봐 🍀',
+          description: '너도 일주를 확인해보자 🍀',
           imageUrl: imageUrl,          // ← 동적으로 생성한 결과 이미지
           imageWidth: 480,
           imageHeight: 640,
@@ -1803,7 +1847,7 @@ function shareKakao() {
       objectType: 'feed',
       content: {
         title: `나의 일주는 ${iljuName}!`,
-        description: '나도 내 사주 일주 확인해봐 🍀',
+        description: '너도 일주를 확인해보자 🍀',
         imageUrl: 'https://obsd-iljutest.co.kr/favicon.png',
         link: { mobileWebUrl: url, webUrl: url }
       },
