@@ -1707,7 +1707,7 @@ function fillShareCard() {
 // ── 이미지 생성 공통 (canvas 반환) ──
 async function buildShareCanvas() {
   const iljuRaw = document.getElementById('ilju-big')?.textContent?.trim() || '—';
-  const iljuName = iljuRaw.replace(/^나는\s*/, '').replace(/구나$/, '').trim();
+  const iljuName = iljuRaw.replace(/^나는\s*/, '').trim();
 
   const W = 480, H = 480, S = 2;
   const canvas = document.createElement('canvas');
