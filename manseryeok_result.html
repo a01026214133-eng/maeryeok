@@ -1576,9 +1576,10 @@ function showToast(msg) {
   setTimeout(() => el.classList.remove('show'), 2000);
 }
 
-// 현재 페이지 공유 URL (일주 정보 포함)
+// 현재 페이지 공유 URL — OG 태그 포함 버전
 function getShareUrl() {
-  return window.location.href;
+  const p = new URLSearchParams(window.location.search);
+  return `${window.location.origin}/api/og?${p.toString()}`;
 }
 
 // 공유 텍스트
@@ -1692,7 +1693,7 @@ async function buildShareCanvas() {
   const iljuRaw = document.getElementById('ilju-big')?.textContent?.trim() || '—';
   const iljuName = iljuRaw.replace(/^나는\s*/, '').replace(/구나$/, '').trim();
 
-  const W = 300, H = 300, S = 2;
+  const W = 480, H = 480, S = 2;
   const canvas = document.createElement('canvas');
   canvas.width  = W * S;
   canvas.height = H * S;
@@ -1720,7 +1721,7 @@ async function buildShareCanvas() {
   ctx.fillText('✦ 나의 일주는 ✦', W/2, H/2 - 80);
 
   // 일주 이름 크게
-  ctx.font = 'bold 50px serif';
+  ctx.font = 'bold 100px serif';
   ctx.fillStyle = '#f5e0a0';
   ctx.textAlign = 'center';
   ctx.fillText(iljuName, W/2, H/2 + 36);
