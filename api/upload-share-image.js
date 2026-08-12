@@ -16,29 +16,27 @@ export default async function handler(req, res) {
 
   try {
     const timestamp = Math.floor(Date.now() / 1000);
+
+    // 서명할 파라미터 (알파벳 순서로 정렬)
     const paramsToSign = `folder=ilju_shares&timestamp=${timestamp}`;
 
-    // HMAC-SHA1 서명 생성
-    const encoder  = new TextEncoder();
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw', encoder.encode(apiSecret),
-      { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
-    );
-    const sigBuffer = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(paramsToSign));
-    const signature = Array.from(new Uint8Array(sigBuffer))
+    // HMAC-SHA256 대신 SHA1 사용 (Cloudinary 기본)
+    const msgBuffer = new TextEncoder().encode(paramsToSign + apiSecret);
+    const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
+    const signature = Array.from(new Uint8Array(hashBuffer))
       .map(b => b.toString(16).padStart(2, '0')).join('');
 
-    const body = new URLSearchParams({
-      file:      image,
-      api_key:   apiKey,
-      timestamp: String(timestamp),
-      folder:    'ilju_shares',
-      signature,
-    });
+    // FormData로 전송
+    const formData = new FormData();
+    formData.append('file', image);
+    formData.append('api_key', apiKey);
+    formData.append('timestamp', String(timestamp));
+    formData.append('folder', 'ilju_shares');
+    formData.append('signature', signature);
 
     const uploadRes = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-      { method: 'POST', body }
+      { method: 'POST', body: formData }
     );
 
     const data = await uploadRes.json();
