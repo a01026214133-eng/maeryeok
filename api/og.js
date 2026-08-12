@@ -42,10 +42,10 @@ export default async function handler(req, res) {
   const siteUrl     = `https://www.obsd-iljutest.co.kr`;
   const resultUrl   = `${siteUrl}/manseryeok_result.html?${p.toString()}`;
 
-  // Cloudinary에서 일주 이미지 가져오기 (이미 업로드된 최신 이미지)
-  // 없으면 기본 파비콘 사용
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'qhcnrrfu';
-  const imageUrl  = `https://res.cloudinary.com/${cloudName}/image/upload/w_480,h_480,c_fill/ilju_shares/${iljuName}.png`;
+  // img 파라미터로 넘어온 Cloudinary 이미지 URL 사용
+  const imageUrl = p.get('img')
+    ? decodeURIComponent(p.get('img'))
+    : `https://www.obsd-iljutest.co.kr/favicon.png`;
 
   const html = `<!DOCTYPE html>
 <html lang="ko">
