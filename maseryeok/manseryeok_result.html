@@ -1687,33 +1687,196 @@ function fillShareCard() {
   }
 }
 
-// ── 이미지 생성 공통 (canvas 반환) ──
+// ── 이미지 생성 공통 (canvas 반환) — Canvas API로 직접 그리기 ──
 async function buildShareCanvas() {
-  fillShareCard();
-  const card = document.getElementById('share-card');
+  // 결과 데이터 수집
+  const name     = document.getElementById('hero-name')?.textContent?.trim() || '';
+  const date     = document.getElementById('hero-date')?.textContent?.trim() || '';
+  const iljuBig  = document.getElementById('ilju-big')?.textContent?.trim() || '—';
+  const iljuHan  = document.getElementById('ilju-hanja')?.textContent?.trim() || '';
 
-  // html2canvas 안정 렌더링: visibility:hidden + fixed 배치
-  card.style.cssText = 'position:fixed;top:-9999px;left:0;width:480px;visibility:hidden;z-index:-1;';
+  // 사주 원국 데이터
+  const sajuTable = document.getElementById('sajupan-body');
+  const rows = sajuTable?.querySelectorAll('tr') || [];
+  const ganRow = rows[0]?.querySelectorAll('td') || [];
+  const jiRow  = rows[1]?.querySelectorAll('td') || [];
+  const cols = [
+    { label: '연주', gi: 3 }, { label: '월주', gi: 2 },
+    { label: '일주', gi: 1, isDay: true }, { label: '시주', gi: 0 }
+  ].map(c => ({
+    label:   c.label,
+    isDay:   c.isDay || false,
+    gan:     ganRow[c.gi]?.querySelector('.gan-char')?.textContent?.trim() || '—',
+    ji:      jiRow[c.gi]?.querySelector('.ji-char')?.textContent?.trim()  || '—',
+    ganColor: ganRow[c.gi]?.querySelector('.gan-char')?.style?.color || '#f5e0a0',
+    jiColor:  jiRow[c.gi]?.querySelector('.ji-char')?.style?.color  || '#f5e0a0',
+  }));
 
-  // 폰트·레이아웃 확정 대기
-  await document.fonts.ready;
-  await new Promise(r => requestAnimationFrame(r));
+  // 오행 데이터
+  const ohaengData = [];
+  document.querySelectorAll('.ohaeng-row').forEach(row => {
+    const label = row.querySelector('.ohaeng-label')?.textContent?.trim() || '';
+    const count = parseInt(row.querySelector('.ohaeng-count')?.textContent || '0');
+    const fill  = row.querySelector('.ohaeng-bar-fill');
+    const cls   = fill ? [...fill.classList].find(c => c.startsWith('fill-')) : '';
+    const colorMap = { 'fill-wood':'#66cc44','fill-fire':'#ee6030','fill-earth':'#ccaa30','fill-metal':'#aaaacc','fill-water':'#3366ee' };
+    ohaengData.push({ label, count, color: colorMap[cls] || '#c08030' });
+  });
+  const maxCount = Math.max(...ohaengData.map(o => o.count), 1);
 
-  const canvas = await html2canvas(card, {
-    backgroundColor: '#160c02',
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-    width: 480,
-    windowWidth: 480,
-    x: 0,
-    y: 0,
-    scrollX: 0,
-    scrollY: 0,
+  // Canvas 설정
+  const W = 480, H = 680, S = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width  = W * S;
+  canvas.height = H * S;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(S, S);
+
+  // 배경
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0,    '#160c02');
+  bg.addColorStop(0.4,  '#2c1a08');
+  bg.addColorStop(0.7,  '#3e240e');
+  bg.addColorStop(1,    '#1a0e04');
+  ctx.fillStyle = bg;
+  ctx.roundRect(0, 0, W, H, 20);
+  ctx.fill();
+
+  // 배경 장식 문자
+  ctx.font = '72px serif';
+  ctx.fillStyle = 'rgba(212,160,64,0.15)';
+  ctx.fillText('☰', W - 90, 80);
+  ctx.font = '56px serif';
+  ctx.fillStyle = 'rgba(200,112,32,0.1)';
+  ctx.fillText('☵', 24, H - 24);
+
+  let y = 44;
+
+  // 헤더 타이틀
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = 'rgba(220,175,80,0.7)';
+  ctx.textAlign = 'center';
+  ctx.fillText('✦ 오복신당 일주 분석 ✦', W/2, y); y += 24;
+
+  // 이름
+  ctx.font = 'bold 22px sans-serif';
+  ctx.fillStyle = '#f5e6c0';
+  ctx.fillText(name, W/2, y); y += 20;
+
+  // 날짜
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = 'rgba(220,190,130,0.55)';
+  ctx.fillText(date, W/2, y); y += 28;
+
+  // 일주 카드 배경
+  const cardX = 36, cardW = W - 72;
+  const cardBg = ctx.createLinearGradient(cardX, y, cardX + cardW, y + 140);
+  cardBg.addColorStop(0, '#1e0f02');
+  cardBg.addColorStop(1, '#1e1004');
+  ctx.fillStyle = cardBg;
+  ctx.strokeStyle = 'rgba(200,150,50,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(cardX, y, cardW, 148, 14);
+  ctx.fill();
+  ctx.stroke();
+
+  y += 22;
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = 'rgba(200,160,70,0.75)';
+  ctx.fillText('당신의 일주는', W/2, y); y += 52;
+
+  // 일주 큰 글자
+  ctx.font = 'bold 48px serif';
+  ctx.fillStyle = '#f5e0a0';
+  ctx.fillText(iljuBig, W/2, y); y += 24;
+
+  // 한자
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = 'rgba(200,170,100,0.6)';
+  ctx.fillText(iljuHan, W/2, y); y += 36;
+
+  // 사주 원국
+  ctx.textAlign = 'left';
+  const colW = 96, colH = 84, colStartX = (W - colW * 4) / 2;
+  cols.forEach((col, i) => {
+    const cx = colStartX + i * colW;
+    // 셀 배경
+    ctx.fillStyle = col.isDay ? 'rgba(200,140,40,0.2)' : 'rgba(255,248,235,0.05)';
+    ctx.strokeStyle = col.isDay ? 'rgba(200,150,50,0.45)' : 'rgba(200,150,50,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(cx + 4, y, colW - 8, colH, 10);
+    ctx.fill();
+    ctx.stroke();
+    // 레이블
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = 'rgba(200,160,70,0.65)';
+    ctx.textAlign = 'center';
+    ctx.fillText(col.label, cx + colW/2, y + 16);
+    // 천간
+    ctx.font = 'bold 26px serif';
+    ctx.fillStyle = col.ganColor || '#f5e0a0';
+    ctx.fillText(col.gan, cx + colW/2, y + 44);
+    // 지지
+    ctx.fillStyle = col.jiColor || '#f5e0a0';
+    ctx.fillText(col.ji, cx + colW/2, y + 72);
+  });
+  y += colH + 18;
+
+  // 오행 바
+  ctx.textAlign = 'left';
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = 'rgba(200,160,70,0.7)';
+  ctx.textAlign = 'center';
+  ctx.fillText('오행 분포', W/2, y); y += 16;
+
+  ohaengData.forEach(o => {
+    const barX = 60, barW = W - 120, barH = 9;
+    // 레이블
+    ctx.font = 'bold 14px serif';
+    ctx.fillStyle = '#f5e0a0';
+    ctx.textAlign = 'left';
+    ctx.fillText(o.label, 36, y + 9);
+    // 바 배경
+    ctx.fillStyle = 'rgba(180,130,50,0.15)';
+    ctx.beginPath();
+    ctx.roundRect(barX, y, barW, barH, 4);
+    ctx.fill();
+    // 바 채우기
+    const fillW = (o.count / maxCount) * barW;
+    if (fillW > 0) {
+      ctx.fillStyle = o.color;
+      ctx.beginPath();
+      ctx.roundRect(barX, y, fillW, barH, 4);
+      ctx.fill();
+    }
+    // 카운트
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = 'rgba(200,160,70,0.7)';
+    ctx.textAlign = 'right';
+    ctx.fillText(String(o.count), W - 36, y + 9);
+    y += 20;
   });
 
-  card.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:480px;';
+  y += 10;
+  // 구분선
+  ctx.strokeStyle = 'rgba(200,150,50,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(36, y); ctx.lineTo(W - 36, y);
+  ctx.stroke();
+  y += 18;
+
+  // 푸터
+  ctx.font = '10px sans-serif';
+  ctx.fillStyle = 'rgba(200,160,70,0.6)';
+  ctx.textAlign = 'center';
+  ctx.fillText('나도 내 일주 확인해봐 🍀', W/2, y); y += 18;
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillStyle = 'rgba(220,180,80,0.85)';
+  ctx.fillText('obsd-iljutest.co.kr', W/2, y);
+
   return canvas;
 }
 
