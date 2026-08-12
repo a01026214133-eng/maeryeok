@@ -1764,7 +1764,7 @@ async function shareWithImage() {
       Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: `나의 일주는 ${iljuName}!`,
+          title: `나는 ${iljuName}!`,
           description: '너도 일주를 확인해보자 🍀',
           imageUrl: imageUrl,          // ← 동적으로 생성한 결과 이미지
           imageWidth: 480,
@@ -1819,7 +1819,7 @@ function shareKakao() {
     Kakao.Share.sendDefault({
       objectType: 'feed',
       content: {
-        title: `나의 일주는 ${iljuName}!`,
+        title: `나는 ${iljuName}!`,
         description: '너도 일주를 확인해보자 🍀',
         imageUrl: 'https://obsd-iljutest.co.kr/favicon.png',
         link: { mobileWebUrl: url, webUrl: url }
