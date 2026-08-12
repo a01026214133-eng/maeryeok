@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/result", "destination": "/manseryeok_result.html" }
+  ]
+}

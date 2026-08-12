@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>오류창 코드 설명</title>
+</head>
+<body>
+
+<!-- ============================
+  1. 오류 모달 HTML 구조
+============================= -->
+
+<div class="modal-overlay" id="error-modal">
+  <div class="modal-box">
+    <div class="modal-icon" id="modal-icon">⚠️</div>
+    <p class="modal-title" id="modal-title">입력 오류</p>
+    <p class="modal-msg" id="modal-msg"></p>
+    <button class="modal-close" onclick="closeModal()">확인</button>
+  </div>
+</div>
+
+
+<!-- ============================
+  2. 오류 모달 CSS 스타일
+============================= -->
+<style>
+  /* 모달 배경 오버레이 */
+  .modal-overlay {
+    display: none;                  /* 기본은 숨김 */
+    position: fixed; inset: 0;     /* 화면 전체 덮기 */
+    background: rgba(0,0,0,0.55);  /* 반투명 검정 배경 */
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+  /* show 클래스가 붙으면 표시 */
+  .modal-overlay.show { display: flex; }
+
+  /* 모달 박스 */
+  .modal-box {
+    background: #fff8eb;
+    border: 1.5px solid rgba(192,57,43,0.3);
+    border-radius: 16px;
+    padding: 2rem 1.8rem 1.5rem;
+    max-width: 320px; width: 90%;
+    text-align: center;
+    animation: popIn 0.2s ease;     /* 등장 애니메이션 */
+  }
+  @keyframes popIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  /* 아이콘 */
+  .modal-icon { font-size: 40px; margin-bottom: 0.8rem; }
+
+  /* 제목 */
+  .modal-title {
+    font-size: 17px; font-weight: 700;
+    color: #7a1010; margin-bottom: 0.5rem;
+  }
+
+  /* 본문 메시지 */
+  .modal-msg {
+    font-size: 13px; color: #9a4020;
+    line-height: 1.7; margin-bottom: 1.4rem;
+  }
+
+  /* 확인 버튼 */
+  .modal-close {
+    background: linear-gradient(90deg, #8b1010, #c03020);
+    color: #fff; border: none; border-radius: 8px;
+    padding: 10px 32px; font-size: 14px;
+    cursor: pointer; font-weight: 500;
+    transition: opacity 0.15s;
+  }
+  .modal-close:hover { opacity: 0.88; }
+
+  /* 오류 칸 빨간 테두리 */
+  .error {
+    border-color: #c0392b !important;
+    box-shadow: 0 0 0 2px rgba(192,57,43,0.15) !important;
+  }
+</style>
+
+
+<!-- ============================
+  3. 오류 모달 JavaScript
+============================= -->
+<script>
+
+  /* 모달 열기 */
+  function showModal(title, icon, msg) {
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-icon').textContent = icon;
+    document.getElementById('modal-msg').innerHTML = msg;
+    document.getElementById('error-modal').classList.add('show');
+  }
+
+  /* 모달 닫기 */
+  function closeModal() {
+    document.getElementById('error-modal').classList.remove('show');
+  }
+
+  /* 오버레이 클릭 시 닫기 */
+  document.getElementById('error-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  /* 오류 표시 초기화 */
+  function clearErrors() {
+    document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+  }
+
+  /* 조회 버튼 클릭 시 유효성 검사 */
+  function doSubmit() {
+    clearErrors();
+
+    const year    = document.getElementById('year-in').value.trim();
+    const month   = document.getElementById('month-in').value;
+    const day     = document.getElementById('day-in').value.trim();
+    const noTime  = document.getElementById('no-time').checked;
+    const hour    = document.getElementById('hour-sel').value;
+    const min     = document.getElementById('min-input').value.trim();
+    const gender  = document.querySelector('input[name="gender"]:checked');
+    const sido    = document.getElementById('sido-sel').value;
+    const sigungu = document.getElementById('sigungu-sel').value;
+
+    let errors = [];
+
+    /* 연도 검사 */
+    if (!year || year < 1900 || year > 2025) {
+      document.getElementById('year-in').classList.add('error');
+      errors.push('• 연도를 올바르게 입력해주세요 (1900~2025)');
+    }
+    /* 월 검사 */
+    if (!month) {
+      document.getElementById('month-in').classList.add('error');
+      errors.push('• 월을 선택해주세요');
+    }
+    /* 일 검사 */
+    if (!day || day < 1 || day > 31) {
+      document.getElementById('day-in').classList.add('error');
+      errors.push('• 일을 올바르게 입력해주세요 (1~31)');
+    }
+    /* 출생시간 검사 (출생시간 모름 체크 안 된 경우만) */
+    if (!noTime) {
+      if (!hour) {
+        document.getElementById('hour-sel').classList.add('error');
+        errors.push('• 출생 시를 선택해주세요');
+      }
+      if (min === '' || min < 0 || min > 59) {
+        document.getElementById('min-input').classList.add('error');
+        errors.push('• 출생 분을 입력해주세요 (0~59)');
+      }
+    }
+    /* 성별 검사 */
+    if (!gender) {
+      document.getElementById('gender-group').classList.add('error');
+      errors.push('• 성별을 선택해주세요');
+    }
+    /* 출생지 시/도 검사 */
+    if (!sido) {
+      document.getElementById('sido-sel').classList.add('error');
+      errors.push('• 출생지 시/도를 선택해주세요');
+    }
+    /* 출생지 시/군/구 검사 */
+    if (!sigungu) {
+      document.getElementById('sigungu-sel').classList.add('error');
+      errors.push('• 출생지 시/군/구를 선택해주세요');
+    }
+
+    /* 오류가 하나라도 있으면 모달 표시 */
+    if (errors.length > 0) {
+      showModal(
+        '입력 정보를 확인해주세요',
+        '⚠️',
+        '입력하지 않은 항목이 있습니다.<br><br>' +
+        '<span style="font-size:12px;color:#c0392b;text-align:left;display:block;line-height:2;">'
+        + errors.join('<br>') +
+        '</span>'
+      );
+      return; /* 오류 있으면 조회 중단 */
+    }
+
+    /* 모든 항목 정상 입력 시 조회 실행 */
+    // 여기에 만세력 조회 로직 연결
+    alert('조회 성공!');
+  }
+
+</script>
+
+</body>
+</html>
