@@ -43,9 +43,14 @@ export default async function handler(req, res) {
   const desc      = `너도 일주를 확인해보자 🍀 obsd-iljutest.co.kr`;
 
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  let ogImageUrl  = `${siteUrl}/favicon.png`;
 
-  if (cloudName) {
+  // img 파라미터로 직접 이미지 URL이 넘어온 경우 (링크 복사 시 캡처 이미지)
+  const imgParam = p.get('img');
+  let ogImageUrl = imgParam
+    ? decodeURIComponent(imgParam)
+    : `${siteUrl}/favicon.png`;
+
+  if (!imgParam && cloudName) {
     // 레이어 순서 (아래→위):
     // 1) 800x800 어두운 배경
     // 2) '✦ 나의 일주는 ✦' 상단 작은 텍스트
