@@ -54,52 +54,131 @@ app.post('/api/upload-share-image', (req, res) => {
 });
 
 // ──────────────────────────────────────────
-// GET /api/og
-// 카카오톡/메신저가 링크 미리보기를 만들 때 긁어가는 OG 태그 페이지
-// 쿼리: 원래 결과 파라미터들 + img=<이미지URL(인코딩)>
+// GET /api/og-image  → SVG를 sharp로 PNG 변환해서 직접 응답
+// 쿼리: name, ilju (일주 이름, e.g. "갑자일주")
+// ──────────────────────────────────────────
+const sharp = require('sharp');
+
+app.get('/api/og-image', async (req, res) => {
+  const { name, ilju } = req.query;
+  const nameText = name  ? decodeURIComponent(name)  : '';
+  const iljuText = ilju  ? decodeURIComponent(ilju)  : '나의 일주';
+
+  // 한글은 서버 폰트 의존 → 유니코드 그대로 SVG에 embed
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#160c02"/>
+      <stop offset="50%"  stop-color="#2c1a08"/>
+      <stop offset="100%" stop-color="#1a0e04"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#f0c060"/>
+      <stop offset="100%" stop-color="#e08030"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 배경 -->
+  <rect width="800" height="800" fill="url(#bg)"/>
+
+  <!-- 테두리 -->
+  <rect x="24" y="24" width="752" height="752" rx="32" ry="32"
+        fill="none" stroke="rgba(200,150,50,0.35)" stroke-width="1.5"/>
+
+  <!-- 장식 문자 -->
+  <text x="680" y="200" font-size="160" fill="rgba(212,160,64,0.07)"
+        font-family="serif" text-anchor="middle">☰</text>
+
+  <!-- 상단 레이블 -->
+  <text x="400" y="290" font-size="22" fill="rgba(220,175,80,0.75)"
+        font-family="sans-serif" text-anchor="middle" letter-spacing="6">
+    ✦ 나의 일주는 ✦
+  </text>
+
+  <!-- 구분선 -->
+  <line x1="180" y1="320" x2="620" y2="320"
+        stroke="rgba(200,150,50,0.3)" stroke-width="1"/>
+
+  <!-- 일주 이름 크게 -->
+  <text x="400" y="460" font-size="110" font-weight="bold"
+        fill="#f5e0a0" font-family="serif" text-anchor="middle">
+    ${escapeHtml(iljuText)}
+  </text>
+
+  <!-- 구분선 -->
+  <line x1="180" y1="500" x2="620" y2="500"
+        stroke="rgba(200,150,50,0.3)" stroke-width="1"/>
+
+  <!-- 이름 표시 -->
+  ${nameText ? `<text x="400" y="560" font-size="22" fill="rgba(220,190,130,0.65)"
+        font-family="sans-serif" text-anchor="middle">
+    ${escapeHtml(nameText)} 님의 사주
+  </text>` : ''}
+
+  <!-- 하단 도메인 -->
+  <text x="400" y="${nameText ? 620 : 580}" font-size="18"
+        fill="rgba(200,160,70,0.4)" font-family="sans-serif" text-anchor="middle">
+    obsd-iljutest.co.kr
+  </text>
+</svg>`;
+
+  try {
+    const png = await sharp(Buffer.from(svg)).png().toBuffer();
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(png);
+  } catch(e) {
+    console.error('/api/og-image 오류:', e);
+    res.status(500).send('이미지 생성 실패');
+  }
+});
+
+// ──────────────────────────────────────────
+// GET /api/og  → OG 태그 페이지 (카카오톡이 긁어가는 곳)
 // ──────────────────────────────────────────
 app.get('/api/og', (req, res) => {
-  const { img, name, year, month, day, hour, gender } = req.query;
-  const imageUrl = img || '';
+  const { name, ilju } = req.query;
 
-  // 결과 페이지 URL (OG 태그 클릭 시 이동할 곳)
-  const protocol   = req.headers['x-forwarded-proto'] || req.protocol;
-  const host       = req.headers['x-forwarded-host']  || req.get('host');
-  const baseUrl    = `${protocol}://${host}`;
-  const params     = new URLSearchParams(req.query);
-  params.delete('img'); // img는 결과 페이지 파라미터에서 제외
-  const resultUrl  = `${baseUrl}/manseryeok_result.html?${params.toString()}`;
+  const protocol  = req.headers['x-forwarded-proto'] || req.protocol;
+  const host      = req.headers['x-forwarded-host']  || req.get('host');
+  const baseUrl   = `${protocol}://${host}`;
 
-  const title       = name ? `${name}의 사주 일주 결과` : '나의 사주 일주 결과';
-  const description = '오복신당에서 나의 일주를 확인해보세요 🍀';
+  // 결과 페이지 URL
+  const params = new URLSearchParams(req.query);
+  const resultUrl = `${baseUrl}/manseryeok_result.html?${params.toString()}`;
+
+  // OG 이미지 URL — 서버가 직접 생성, 파일 저장 불필요
+  const imgParams = new URLSearchParams();
+  if (name) imgParams.set('name', name);
+  if (ilju) imgParams.set('ilju', ilju);
+  const ogImageUrl = `${baseUrl}/api/og-image?${imgParams.toString()}`;
+
+  const nameText  = name ? decodeURIComponent(name) : '';
+  const title     = nameText ? `${nameText}의 사주 일주 결과` : '나의 사주 일주 결과';
+  const desc      = '오복신당에서 나의 일주를 확인해보세요 🍀';
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  // 카카오톡 캐시 갱신을 위해 캐시 짧게 설정
   res.setHeader('Cache-Control', 'public, max-age=300');
   res.send(`<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta property="og:type"        content="website">
-  <meta property="og:title"       content="${escapeHtml(title)}">
-  <meta property="og:description" content="${escapeHtml(description)}">
-  <meta property="og:url"         content="${escapeHtml(resultUrl)}">
-  ${imageUrl ? `
-  <meta property="og:image"        content="${escapeHtml(imageUrl)}">
-  <meta property="og:image:width"  content="960">
-  <meta property="og:image:height" content="960">
-  <meta property="og:image:type"   content="image/png">` : ''}
+  <meta property="og:type"         content="website">
+  <meta property="og:title"        content="${escapeHtml(title)}">
+  <meta property="og:description"  content="${escapeHtml(desc)}">
+  <meta property="og:url"          content="${escapeHtml(resultUrl)}">
+  <meta property="og:image"        content="${escapeHtml(ogImageUrl)}">
+  <meta property="og:image:width"  content="800">
+  <meta property="og:image:height" content="800">
+  <meta property="og:image:type"   content="image/png">
   <meta name="twitter:card"        content="summary_large_image">
   <meta name="twitter:title"       content="${escapeHtml(title)}">
-  <meta name="twitter:description" content="${escapeHtml(description)}">
-  ${imageUrl ? `<meta name="twitter:image" content="${escapeHtml(imageUrl)}">` : ''}
-  <!-- 즉시 결과 페이지로 리다이렉트 -->
+  <meta name="twitter:description" content="${escapeHtml(desc)}">
+  <meta name="twitter:image"       content="${escapeHtml(ogImageUrl)}">
   <meta http-equiv="refresh" content="0; url=${escapeHtml(resultUrl)}">
   <title>${escapeHtml(title)}</title>
 </head>
-<body>
-  <a href="${escapeHtml(resultUrl)}">결과 페이지로 이동</a>
-</body>
+<body><a href="${escapeHtml(resultUrl)}">결과 페이지로 이동</a></body>
 </html>`);
 });
 
