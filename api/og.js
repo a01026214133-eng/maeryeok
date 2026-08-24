@@ -40,7 +40,7 @@ export default async function handler(req, res) {
   const siteUrl   = `https://www.obsd-iljutest.co.kr`;
   const resultUrl = `${siteUrl}/manseryeok_result.html?${p.toString()}`;
   const title     = `나는 ${iljuName}구나!`;
-  const desc      = `너도 일주를 확인해보자 🍀 obsd-iljutest.co.kr`;
+  const desc      = `MBTI보다 정확한 일주테스트, 내 일주 알아보기`;
 
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'qhcnrrfu';
 
