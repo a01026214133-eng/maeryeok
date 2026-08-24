@@ -1575,11 +1575,8 @@ function showToast(msg) {
 
 // 현재 페이지 공유 URL — OG 태그 포함 버전
 function getShareUrl() {
+  // year/month/day 파라미터를 그대로 넘김 → 서버(/api/og-image)가 일주 계산 & 이미지 생성
   const p = new URLSearchParams(window.location.search);
-  // ilju 파라미터 추가 (서버가 OG 이미지 생성에 사용)
-  const iljuRaw = document.getElementById('ilju-big')?.textContent?.trim() || '';
-  const ilju    = iljuRaw.replace(/^당신의 일주는\s*/, '').trim();
-  if (ilju) p.set('ilju', ilju);
   return `${window.location.origin}/api/og?${p.toString()}`;
 }
 
@@ -1870,9 +1867,9 @@ function shareKakao() {
   }
 }
 
-// ② 링크 복사 — 서버가 OG 이미지를 직접 생성하므로 업로드 불필요
+// ② 링크 복사 — 서버(/api/og-image)가 이미지를 직접 생성하므로 업로드 불필요
 function copyLink() {
-  const shareUrl = getShareUrl(); // ilju 파라미터 포함된 /api/og URL
+  const shareUrl = getShareUrl();
   copyToClipboard(shareUrl, '링크가 복사됐어요! 카카오톡에 붙여넣기 해보세요 🔗');
 }
 
