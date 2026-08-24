@@ -1867,57 +1867,10 @@ function shareKakao() {
   }
 }
 
-// ② 링크 복사 — share-card를 html2canvas로 캡처 → Cloudinary 업로드 → OG URL 복사
-async function copyLink() {
-  const btn     = document.getElementById('share-link');
-  const btnText = document.getElementById('link-btn-text');
-  const origHTML = btn.innerHTML;
-  btn.disabled = true;
-  btnText.textContent = '준비 중…';
-
-  try {
-    // 1) share-card 내용 채우기
-    fillShareCard();
-
-    // 2) share-card를 화면에 잠깐 올려서 html2canvas 캡처
-    const card = document.getElementById('share-card');
-    card.style.top  = '-9999px';
-    card.style.left = '-9999px';
-    card.style.display = 'block';
-
-    btnText.textContent = '캡처 중…';
-    const canvas = await html2canvas(card, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: null,
-      logging: false,
-    });
-    card.style.display = '';
-
-    // 3) Cloudinary 업로드
-    btnText.textContent = '업로드 중…';
-    const imageB64 = canvas.toDataURL('image/png');
-    const res = await fetch('/api/upload-share-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageB64 }),
-    });
-    if (!res.ok) throw new Error('업로드 실패');
-    const { url: imageUrl } = await res.json();
-
-    // 4) OG URL에 img 파라미터로 넣어서 복사
-    const p = new URLSearchParams(window.location.search);
-    p.set('img', imageUrl);
-    const shareUrl = `${window.location.origin}/api/og?${p.toString()}`;
-
-    copyToClipboard(shareUrl, '링크가 복사됐어요! 카카오톡에 붙여넣기 해보세요 🔗');
-  } catch(e) {
-    console.error('[copyLink 오류]', e);
-    copyToClipboard(getShareUrl(), '링크가 복사됐어요! 🔗');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = origHTML;
-  }
+// ② 링크 복사
+function copyLink() {
+  const shareUrl = getShareUrl();
+  copyToClipboard(shareUrl, '링크가 복사됐어요! 카카오톡에 붙여넣기 해보세요 🔗');
 }
 
 // ③ 인스타그램 (이미지 저장 안내)
