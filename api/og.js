@@ -67,8 +67,8 @@ export default async function handler(req, res) {
   <meta name="twitter:description" content="${esc(desc)}">
   <meta name="twitter:image"       content="${esc(ogImageUrl)}">
   <title>${esc(title)}</title>
-  <script>window.location.replace("${esc(resultUrl)}");</script>
-  <meta http-equiv="refresh" content="0;url=${esc(resultUrl)}">
+  <script>window.location.replace("${resultUrl}");</script>
+  <meta http-equiv="refresh" content="0;url=${resultUrl}">
 </head>
 <body><p>잠시만 기다려주세요... <a href="${esc(resultUrl)}">결과 보기</a></p></body>
 </html>`;
