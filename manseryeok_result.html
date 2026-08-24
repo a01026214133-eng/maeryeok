@@ -269,10 +269,7 @@
     .share-btn:hover { opacity: 0.85; transform: translateY(-1px); }
     .share-btn:active { transform: translateY(0); }
     .share-btn-kakao { background: #FEE500; color: #3C1E1E; }
-    .share-btn-link {
-      background: rgba(255,248,220,0.08); border: 1px solid rgba(200,150,50,0.3);
-      color: rgba(220,190,130,0.9);
-    }
+    .share-btn-link { background: #FEE500; border: none; color: #3C1E1E; }
     .share-btn-icon { flex-shrink: 0; line-height: 1; display: flex; align-items: center; justify-content: center; }
     /* 복사 완료 토스트 */
     .copy-toast {
@@ -639,7 +636,7 @@
 
     <!-- 일주 발표 -->
     <div class="ilju-card">
-      <div class="ilju-announce">당신의 일주는</div>
+      <div class="ilju-announce"></div>
       <div class="ilju-big" id="ilju-big">—</div>
       <div class="ilju-hanja" id="ilju-hanja">—</div>
       <div class="ilju-badge-row" id="ilju-badges"></div>
@@ -673,12 +670,12 @@
         <!-- 링크 복사 -->
         <button class="share-btn share-btn-link" id="share-link" onclick="copyLink()">
           <span class="share-btn-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(220,190,130,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C1E1E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
             </svg>
           </span>
-          나의 링크 공유하기
+          <span id="link-btn-text">링크 복사</span>
         </button>
         <!-- 카카오톡 (모바일: 이미지 공유 / PC: 이미지 저장) -->
         <button class="share-btn share-btn-kakao" id="share-kakao" onclick="shareWithImage()">
@@ -687,7 +684,7 @@
               <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.56 5.08 3.93 6.54L5 21l4.27-2.27C10.13 19.04 11.05 19.2 12 19.2c5.523 0 10-3.477 10-7.8C22 6.477 17.523 3 12 3z"/>
             </svg>
           </span>
-          <span id="kakao-btn-text">카카오톡으로 공유하기</span>
+          <span id="kakao-btn-text">카카오톡</span>
         </button>
       </div>
     </div>
@@ -1616,7 +1613,7 @@ function fillShareCard() {
   document.getElementById('sc-date').textContent = dateEl?.textContent || '';
 
   // 일주 대표
-  const iljuText = iljuBig?.textContent || '—';
+  const iljuText = (iljuBig?.textContent || '—').replace('당신의 일주는 ', '');
   document.getElementById('sc-ilju-big').textContent = iljuText;
   document.getElementById('sc-ilju-hanja').textContent = iljuHan?.textContent || '';
 
@@ -1707,7 +1704,7 @@ function fillShareCard() {
 // ── 이미지 생성 공통 (canvas 반환) ──
 async function buildShareCanvas() {
   const iljuRaw = document.getElementById('ilju-big')?.textContent?.trim() || '—';
-  const iljuName = iljuRaw.replace(/^나는\s*/, '').trim();
+  const iljuName = iljuRaw.replace(/^당신의 일주는\s*/, '').trim();
 
   const W = 480, H = 480, S = 2;
   const canvas = document.createElement('canvas');
@@ -1757,6 +1754,10 @@ async function shareWithImage() {
   btn.disabled  = true;
   btnText.textContent = '생성 중…';
 
+  // ✅ 수정: iljuName을 함수 스코프 최상단에서 추출
+  const iljuRaw  = document.getElementById('ilju-big')?.textContent?.trim() || '나의 일주';
+  const iljuName = iljuRaw.replace(/^당신의 일주는\s*/, '').trim();
+
   try {
     // 1) 결과 카드 캔버스 생성
     const canvas   = await buildShareCanvas();
@@ -1782,9 +1783,9 @@ async function shareWithImage() {
       Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
-          title: `${iljuName}!`,
+          title: `${iljuName}!`,        // ✅ 수정: 이제 정상적으로 참조됨
           description: '너도 일주를 확인해보자 🍀',
-          imageUrl: imageUrl,          // ← 동적으로 생성한 결과 이미지
+          imageUrl: imageUrl,
           imageWidth: 480,
           imageHeight: 640,
           link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
@@ -1800,15 +1801,28 @@ async function shareWithImage() {
     }
   } catch(e) {
     console.error('[shareWithImage 오류]', e);
-    if (e.message === '업로드 실패' || e.name === 'TypeError') {
-      // fetch 자체 실패 → 서버 연결 문제
-      showToast('서버 연결 오류 — server.js가 실행 중인지 확인해주세요.');
+    // ✅ 수정: 업로드 실패해도 이미지 없이 카카오 공유로 폴백
+    const fallbackUrl = getShareUrl();
+    if (window.Kakao && window.Kakao.isInitialized()) {
+      Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: `${iljuName}!`,
+          description: '너도 일주를 확인해보자 🍀',
+          imageUrl: 'https://obsd-iljutest.co.kr/favicon.png',
+          link: { mobileWebUrl: fallbackUrl, webUrl: fallbackUrl },
+        },
+        buttons: [{
+          title: '내 일주 결과 보기',
+          link: { mobileWebUrl: fallbackUrl, webUrl: fallbackUrl },
+        }],
+      });
     } else {
-      showToast('오류: ' + (e.message || '알 수 없는 오류'));
+      copyToClipboard(fallbackUrl, '오류 발생 — 링크를 복사했어요 🔗');
     }
   } finally {
     btn.disabled = false;
-    btnText.textContent = '카카오톡으로 공유하기';
+    btnText.textContent = '카카오톡';
   }
 }
 
@@ -1817,7 +1831,7 @@ async function saveResultImage() {
   showToast('이미지를 생성 중입니다… 🎴');
   try {
     const canvas = await buildShareCanvas();
-    const iljuName = document.getElementById('ilju-big')?.textContent?.trim() || '일주결과';
+    const iljuName = document.getElementById('ilju-big')?.textContent?.replace('당신의 일주는 ', '').trim() || '일주결과';
     const link = document.createElement('a');
     link.download = `나의일주_${iljuName}.png`;
     link.href = canvas.toDataURL('image/png');
@@ -1831,7 +1845,7 @@ async function saveResultImage() {
 // ① 카카오톡 공유
 function shareKakao() {
   const url = getShareUrl(); // 현재 결과 페이지 URL (파라미터 포함)
-  const iljuName = document.getElementById('ilju-big')?.textContent?.replace(  '나는 ', '').replace('구나', '').trim() || '나의 일주';
+  const iljuName = document.getElementById('ilju-big')?.textContent?.replace('당신의 일주는 ', '').trim() || '나의 일주';
 
   if (window.Kakao && window.Kakao.isInitialized()) {
     Kakao.Share.sendDefault({
@@ -1852,20 +1866,45 @@ function shareKakao() {
   }
 }
 
-// ② 링크 복사 (이미지 업로드 후 OG URL 복사)
+// ② 링크 복사 (이미지 업로드 후 OG URL 복사 → 카카오톡 붙여넣기 시 사진 미리보기)
 async function copyLink() {
-  const btn = document.getElementById('share-link');
-  const origText = btn.innerHTML;
-  btn.style.opacity = '0.6';
+  const btn     = document.getElementById('share-link');
+  const btnText = document.getElementById('link-btn-text');
+  const origHTML = btn.innerHTML;
+
+  btn.disabled = true;
+  btnText.textContent = '생성 중…';
+
   try {
-    showToast('링크를 준비 중입니다… 🔗');
-    const url = await getShareUrlWithImage();
-    copyToClipboard(url, '링크가 복사됐어요! 🔗');
+    // 1) 캔버스 이미지 생성
+    btnText.textContent = '이미지 생성 중…';
+    const canvas   = await buildShareCanvas();
+    const imageB64 = canvas.toDataURL('image/png');
+
+    // 2) 서버 업로드 → 공개 이미지 URL 확보
+    btnText.textContent = '업로드 중…';
+    const res = await fetch('/api/upload-share-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imageB64 }),
+    });
+    if (!res.ok) throw new Error('업로드 실패');
+    const { url: imageUrl } = await res.json();
+
+    // 3) OG URL 생성 (이미지 포함) → 복사
+    //    카카오톡/메신저에 붙여넣으면 imageUrl이 썸네일로 표시됨
+    const p = new URLSearchParams(window.location.search);
+    p.set('img', encodeURIComponent(imageUrl));
+    const shareUrl = `${window.location.origin}/api/og?${p.toString()}`;
+
+    copyToClipboard(shareUrl, '링크가 복사됐어요! 카카오톡에 붙여넣기 해보세요 🔗');
   } catch(e) {
-    // 실패 시 일반 URL 복사
+    console.error('[copyLink 오류]', e);
+    // 업로드 실패 시 이미지 없는 일반 URL로 폴백
     copyToClipboard(getShareUrl(), '링크가 복사됐어요! 🔗');
   } finally {
-    btn.style.opacity = '1';
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
   }
 }
 
@@ -1879,7 +1918,7 @@ function shareInstagram() {
 // ④ X (트위터) 공유
 function shareTwitter() {
   const url = getShareUrl();
-  const iljuName = document.getElementById('ilju-big')?.textContent?.replace(  '나는 ', '').replace('구나', '').trim() || '';
+  const iljuName = document.getElementById('ilju-big')?.textContent?.replace('당신의 일주는 ', '').trim() || '';
   const text = getShareText(iljuName);
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   window.open(twitterUrl, '_blank', 'noopener,noreferrer');
@@ -1998,7 +2037,7 @@ async function main() {
     updateVisitorCount();
 
     // 일주 카드
-    document.getElementById('ilju-big').innerHTML = `나는 <em>${dayJu.gan}${dayJu.ji}일주</em>구나`;
+    document.getElementById('ilju-big').innerHTML = `<span style="font-size:0.5em;font-weight:400;color:rgba(220,190,130,0.7);display:block;margin-bottom:0.3em;letter-spacing:0.15em;">당신의 일주는</span><em>${dayJu.gan}${dayJu.ji}일주</em>`;
     document.getElementById('ilju-hanja').textContent = `${dayJu.ganHan}(${dayJu.gan}) ${dayJu.jiHan}(${dayJu.ji}) · ${ANIMAL[dayJiIdx]}띠 지지`;
 
     const badgesEl = document.getElementById('ilju-badges');
