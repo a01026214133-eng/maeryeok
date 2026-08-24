@@ -42,40 +42,10 @@ export default async function handler(req, res) {
   const title     = `나는 ${iljuName}구나!`;
   const desc      = `너도 일주를 확인해보자 🍀 obsd-iljutest.co.kr`;
 
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'qhcnrrfu';
 
-  // img 파라미터로 직접 이미지 URL이 넘어온 경우 (링크 복사 시 캡처 이미지)
-  const imgParam = p.get('img');
-  let ogImageUrl = imgParam
-    ? decodeURIComponent(imgParam)
-    : `${siteUrl}/favicon.png`;
-
-  if (!imgParam && cloudName) {
-    // 레이어 순서 (아래→위):
-    // 1) 800x800 어두운 배경
-    // 2) '✦ 나의 일주는 ✦' 상단 작은 텍스트
-    // 3) 일주 이름 (4글자, 크게) — 폰트 72px로 잘리지 않게
-    // 4) 이름 (있을 경우) 하단 작은 텍스트
-    // 5) 도메인 최하단
-    const layers = [
-      `w_1200,h_630,c_fill,b_rgb:1a0e04`,
-
-      // 상단 레이블
-      `l_text:NanumGothic_22:%E2%9C%A6%20%EB%82%98%EC%9D%98%20%EC%9D%BC%EC%A3%BC%EB%8A%94%20%E2%9C%A6,co_rgb:DCAF50,g_north,y_120`,
-
-      // 일주 이름 — 가로형이므로 크게 써도 잘 어울림
-      `l_text:NanumGothic_96_bold:${clEnc(iljuName)},co_rgb:F5E0A0,g_center,y_0`,
-
-      // 이름 (있을 때)
-      ...(name ? [`l_text:NanumGothic_26:${clEnc(name + ' 님의 사주')},co_rgb:DCC882,g_south,y_100`] : []),
-
-      // 도메인
-      `l_text:NanumGothic_20:obsd-iljutest.co.kr,co_rgb:887040,g_south,y_50`,
-
-      `v1/oboak_g`,
-    ];
-    ogImageUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${layers.join('/')}`;
-  }
+  // 오복할머니 이미지를 고정 OG 이미지로 사용
+  const ogImageUrl = `https://res.cloudinary.com/${cloudName}/image/upload/v1/%EC%98%A4%EB%B3%B5%ED%95%A0%EB%A8%B8%EB%8B%88`;
 
   const html = `<!DOCTYPE html>
 <html lang="ko">
