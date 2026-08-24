@@ -60,7 +60,7 @@ app.post('/api/upload-share-image', (req, res) => {
 // ──────────────────────────────────────────
 app.get('/api/og', (req, res) => {
   const { img, name, year, month, day, hour, gender } = req.query;
-  const imageUrl = img ? decodeURIComponent(img) : '';
+  const imageUrl = img || '';
 
   // 결과 페이지 URL (OG 태그 클릭 시 이동할 곳)
   const protocol   = req.headers['x-forwarded-proto'] || req.protocol;
