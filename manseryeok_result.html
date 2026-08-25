@@ -257,20 +257,21 @@
       margin-bottom: 0.75rem;
     }
     .share-buttons {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
     }
     .share-btn {
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-      height: 52px; border: none; border-radius: 10px; cursor: pointer;
-      font-size: 10px; font-family: 'Noto Serif KR', serif;
-      font-weight: 500; letter-spacing: 0.03em; transition: opacity 0.2s, transform 0.15s;
-      text-decoration: none; padding: 0 6px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+      height: 76px; border: none; border-radius: 14px; cursor: pointer;
+      font-size: 13px; font-family: 'Noto Serif KR', serif;
+      font-weight: 700; letter-spacing: 0.04em; transition: opacity 0.2s, transform 0.15s;
+      text-decoration: none; padding: 0 10px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.25);
     }
-    .share-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .share-btn:hover { opacity: 0.85; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.3); }
     .share-btn:active { transform: translateY(0); }
     .share-btn-kakao { background: #FEE500; color: #3C1E1E; }
-    .share-btn-link { background: #FEE500; border: none; color: #3C1E1E; }
-    .share-btn-icon { flex-shrink: 0; line-height: 1; display: flex; align-items: center; justify-content: center; }
+    .share-btn-link { background: rgba(255,248,235,0.12); border: 1px solid rgba(200,150,60,0.35); color: rgba(220,190,130,0.85); }
+    .share-btn-icon { flex-shrink: 0; line-height: 1; display: flex; align-items: center; justify-content: center; font-size: 24px; }
     /* 복사 완료 토스트 */
     .copy-toast {
       position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -675,7 +676,7 @@
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
             </svg>
           </span>
-          <span id="link-btn-text">링크 복사</span>
+          <span id="link-btn-text">일주 테스트 공유하기</span>
         </button>
         <!-- 카카오톡 (모바일: 이미지 공유 / PC: 이미지 저장) -->
         <button class="share-btn share-btn-kakao" id="share-kakao" onclick="shareWithImage()">
@@ -684,7 +685,7 @@
               <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.56 5.08 3.93 6.54L5 21l4.27-2.27C10.13 19.04 11.05 19.2 12 19.2c5.523 0 10-3.477 10-7.8C22 6.477 17.523 3 12 3z"/>
             </svg>
           </span>
-          <span id="kakao-btn-text">카카오톡</span>
+          <span id="kakao-btn-text">내 결과 공유하기 (링크복사)</span>
         </button>
       </div>
     </div>
@@ -1823,7 +1824,7 @@ async function shareWithImage() {
     }
   } finally {
     btn.disabled = false;
-    btnText.textContent = '카카오톡';
+    btnText.textContent = '내 결과 공유하기 (링크복사)';
   }
 }
 
@@ -1869,8 +1870,35 @@ function shareKakao() {
 
 // ② 링크 복사
 function copyLink() {
-  const shareUrl = getShareUrl();
-  copyToClipboard(shareUrl, '링크가 복사됐어요! 카카오톡에 붙여넣기 해보세요 🔗');
+  const mainUrl = 'https://www.obsd-iljutest.co.kr/';
+  const successMsg = '링크가 복사됐어요! 카카오톡에 붙여넣기 해보세요 🔗';
+
+  // clipboard API 우선 시도
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(mainUrl)
+      .then(() => showToast(successMsg))
+      .catch(() => {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = mainUrl;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try { document.execCommand('copy'); showToast(successMsg); }
+        catch(e) { showToast('복사에 실패했어요. 직접 URL을 복사해주세요.'); }
+        document.body.removeChild(ta);
+      });
+  } else {
+    // http 환경이나 구형 브라우저 fallback
+    const ta = document.createElement('textarea');
+    ta.value = mainUrl;
+    ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); showToast(successMsg); }
+    catch(e) { showToast('복사에 실패했어요. 직접 URL을 복사해주세요.'); }
+    document.body.removeChild(ta);
+  }
 }
 
 // ③ 인스타그램 (이미지 저장 안내)
