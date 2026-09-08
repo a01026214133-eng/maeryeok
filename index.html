@@ -23,7 +23,7 @@
     .hero {
       background: linear-gradient(150deg, #160c02 0%, #2c1a08 25%, #3e240e 50%, #2e1c09 75%, #1a0e04 100%);
       border: 1px solid rgba(120,70,20,0.4);
-      padding: 1.5rem 1.2rem; text-align: center; min-height: 220px;
+      padding: 1.5rem 1.2rem; text-align: center; min-height: 200px;
       position: relative; overflow: hidden; border-radius: 16px; margin-bottom: 1.5rem;
     }
     .hero-inner {
@@ -46,11 +46,11 @@
       filter: none;
     }
     @media (max-width: 480px) {
-      .hero-inner { flex-direction: column-reverse; align-items: center; }
-      .hero-character-wrap { width: 110px; }
+      .hero-inner { flex-direction: row-reverse; align-items: flex-end; gap: 0.8rem; }
+      .hero-character-wrap { width: 110px; flex-shrink: 0; }
       .hero-character { width: 110px; }
-      .hero-text-wrap { text-align: center; }
-      .hero-logo { margin: 0 auto 0.8rem; }
+      .hero-text-wrap { text-align: left; flex: 1; min-width: 0; }
+      .hero-logo { margin: 0 0 0.5rem; height: 44px; }
     }
     .hero::before {
       content:''; position:absolute; inset:0;
@@ -62,13 +62,13 @@
     @keyframes twinkle { 0%{opacity:0.15} 100%{opacity:0.9} }
     .hero-deco  { position:absolute; top:16px; right:24px; opacity:0.2; font-size:56px; color:#d4a040; pointer-events:none; line-height:1; }
     .hero-deco2 { position:absolute; bottom:14px; left:22px; opacity:0.14; font-size:42px; color:#c87020; pointer-events:none; }
-    .hero-eyebrow { font-size:28px; letter-spacing:0.05em; font-family:'Noto Serif KR',serif; margin-bottom:0.7rem; position:relative; font-weight:700; background:linear-gradient(90deg,#f0c060,#e08030); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .hero-title { font-family:'Noto Serif KR',serif; font-size:18px; font-weight:700; color:#f5e6c0; line-height:1.8; position:relative; letter-spacing:0.01em; }
+    .hero-eyebrow { font-size:19px; letter-spacing:0.05em; font-family:'Noto Serif KR',serif; margin-bottom:0.7rem; position:relative; font-weight:700; background:linear-gradient(90deg,#f0c060,#e08030); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .hero-title { font-family:'Noto Serif KR',serif; font-size:15px; font-weight:700; color:#f5e6c0; line-height:1.8; position:relative; letter-spacing:0.01em; }
     .hero-title em { font-style:normal; color:#f5e6c0; -webkit-text-fill-color:#f5e6c0; }
-    .hero-sub { font-size:15px; color:rgba(220,190,130,0.75); margin-top:0.7rem; position:relative; font-weight:300; line-height:1.9; }
+    .hero-sub { font-size:13px; color:rgba(220,190,130,0.75); margin-top:0.7rem; position:relative; font-weight:300; line-height:1.9; }
 
     /* Form Card */
-    .form-card { background:rgba(255,248,235,0.96); border:1px solid rgba(200,150,60,0.25); border-radius:14px; padding:1.4rem 1.2rem 1.2rem; margin-bottom:1.1rem; }
+    .form-card { background:rgba(255,248,235,0.96); border:1px solid rgba(200,150,60,0.25); border-radius:14px; padding:1.2rem 1rem 1rem; margin-bottom:1.1rem; }
     .card-title { font-size:22px; font-weight:700; color:#3a1f00; font-family:'Noto Serif KR',serif; letter-spacing:0.02em; margin-bottom:0.4rem; text-align:center; }
     .card-desc { font-size:13px; color:#9a6830; font-weight:400; margin-bottom:1.6rem; letter-spacing:0.01em; text-align:center; }
     .section-label { font-size:15px; font-weight:700; letter-spacing:0.04em; color:#7a4010; margin-bottom:1.2rem; display:flex; align-items:center; gap:10px; font-family:'Noto Sans KR',sans-serif; }
