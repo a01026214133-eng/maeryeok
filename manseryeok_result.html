@@ -1949,7 +1949,10 @@ async function updateVisitorCount() {
   try {
     // 현재 카운트 가져오기
     const getRes = await fetch(DB_URL);
-    const current = (await getRes.json()) || 0;
+    const raw = await getRes.json();
+
+    // Firebase에서 받아온 값이 숫자가 아닌 경우(객체·null·문자열 등) 방어 처리
+    let current = (typeof raw === 'number' && isFinite(raw)) ? raw : 0;
 
     // +1 올려서 저장
     const next = current + 1;
